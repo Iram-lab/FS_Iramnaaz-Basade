@@ -1,5 +1,9 @@
-                             Student Commute Optimizer (Full Stack)
+                                                                             Student Commute Optimizer (Full Stack)
+                                                                        ______________________________________________
+
+
 i] The overall flow of project:
+_________________________________________
 
 
 1)Student opens app → signs up or logs in with unique username.
@@ -22,9 +26,10 @@ i] The overall flow of project:
 
 10)User can update route → backend recalculates matches dynamically.
 
-
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ii] Technological Approach:
+___________________________________
 
 1. User Interface & Frontend
 
@@ -85,8 +90,10 @@ Limit number of stored past routes/messages to reduce storage costs.
 
 Use WebSocket for efficient, persistent connections instead of polling.
 Implement simple pub/sub messaging channels on backend for scalability.
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-iii] Core Pseudo Code
+iii] Core Pseudo Code:
+_________________________
 a) Backend: Route Matching Algorithm (Spring Boot + PostGIS)
 // Assume Route is stored as a LINESTRING in PostGIS
 
