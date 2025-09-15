@@ -1,0 +1,176 @@
+                             Student Commute Optimizer (Full Stack)
+i] The overall flow of project:
+
+
+1)Student opens app → signs up or logs in with unique username.
+
+2)Enters home and destination addresses.
+
+3)Frontend sends route info (coordinates) to backend via REST.
+
+4)Backend saves route and queries database to find overlapping routes using PostGIS spatial queries.
+
+5)Backend returns a list of matched users (anonymous usernames with route overlap metadata).
+
+6)Frontend displays matched users as icons on map.
+
+7)Student clicks icon → opens chat window → WebSocket connection established.
+
+8)Messages sent bi-directionally via WebSocket.
+
+9)Students coordinate ride.
+
+10)User can update route → backend recalculates matches dynamically.
+
+
+
+ii] Technological Approach:
+
+1. User Interface & Frontend
+
+---Use React Native for cross-platform mobile app development.
+Why? One codebase for iOS and Android reduces development and maintenance cost.
+React Native integrates well with mapping libraries (Google Maps, Mapbox).
+
+---Map integration via free or affordable APIs like OpenStreetMap or Mapbox (free tier).
+Why? Google Maps has costs based on usage; Mapbox or OSM provide generous free tiers, lowering costs.
+Minimal UI with simple input forms (home, destination) + map view + chat window.
+
+
+
+2. Backend Architecture
+
+---Use Spring Boot for backend REST APIs and WebSocket support.
+Why? Robust, scalable, widely supported, and allows multi-threaded handling of requests efficiently.
+Can be hosted on cost-effective cloud services (AWS EC2 t3.small, Google Cloud f1-micro, or Heroku free tier).
+Implement REST APIs for route submission and fetching matched routes.
+Use WebSocket for real-time chat.
+
+3. Database
+
+---Use PostgreSQL with PostGIS extension for spatial queries.
+Why? Open-source, powerful geospatial query support.
+Cost-effective compared to proprietary GIS systems.
+Use indexing on route geometries to speed up spatial queries and reduce computation time and cloud resources usage.
+
+4. Route Matching Logic
+
+Preprocess routes as polylines, and store as geography type in PostGIS.
+Run spatial queries to find routes within a threshold distance (e.g., 200m).
+Use ST_DWithin for fast proximity checks.
+Filter matches based on overlap length or shared travel direction.
+Perform matching only when routes are submitted or updated (event-driven) instead of continuous polling.
+Reduces compute cost drastically.
+
+5. User Privacy & Anonymity
+
+Unique username enforcement at registration.
+Simple username availability check, no PII collected.
+Chat handled through anonymous usernames only, no personal data exchanged.
+
+6. Hosting & Infrastructure
+
+Host backend and database on cloud providers with free or low-cost tiers (e.g., AWS Free Tier, Google Cloud, DigitalOcean).
+Use containerization (Docker) for easy deployment and scalability.
+Implement caching (Redis or in-memory) to reduce DB load for frequent queries.
+
+7. Optimization & Cost Saving Measures
+
+Batch process matching during low-traffic periods or use event triggers.
+Cache frequently requested matches on backend or CDN.
+Compress and limit chat message size to minimize bandwidth.
+Limit number of stored past routes/messages to reduce storage costs.
+
+8. Real-time Communication
+
+Use WebSocket for efficient, persistent connections instead of polling.
+Implement simple pub/sub messaging channels on backend for scalability.
+
+iii] Core Pseudo Code
+a) Backend: Route Matching Algorithm (Spring Boot + PostGIS)
+// Assume Route is stored as a LINESTRING in PostGIS
+
+public List<UserRoute> findMatches(LineString newRoute, UUID currentUserId) {
+    // SQL Query (PostGIS): Find routes overlapping with newRoute within a threshold distance
+    String sql = "SELECT user_id, route " +
+                 "FROM user_routes " +
+                 "WHERE user_id != :currentUserId " + 
+                 "AND ST_DWithin(route::geography, :newRoute::geography, :distanceThreshold)";
+
+    // Execute query with newRoute geometry and currentUserId to exclude self
+    List<UserRoute> matchedRoutes = jdbcTemplate.query(sql, Map.of(
+        "newRoute", newRoute.toText(),          // WKT format
+        "currentUserId", currentUserId,
+        "distanceThreshold", 200                // meters threshold for route proximity
+    ), userRouteRowMapper);
+
+    // Further filter by overlapping route length or other heuristics if needed
+
+    return matchedRoutes;
+}
+
+
+b) Backend: Unique Username Registration
+public boolean isUsernameAvailable(String username) {
+    String sql = "SELECT COUNT(*) FROM users WHERE username = :username";
+    int count = jdbcTemplate.queryForObject(sql, Map.of("username", username), Integer.class);
+    return count == 0;
+}
+
+public User registerUser(String username) throws UsernameTakenException {
+    if (!isUsernameAvailable(username)) {
+        throw new UsernameTakenException();
+    }
+    // Insert user record with anonymous profile
+    String sql = "INSERT INTO users (username) VALUES (:username)";
+    jdbcTemplate.update(sql, Map.of("username", username));
+    return getUserByUsername(username);
+}
+
+
+
+c) Frontend: Sending Route Data & Displaying Matches (React Native)
+async function submitRoute(homeLocation, destination) {
+  // Call backend API with route info
+  const response = await fetch('https://api.example.com/routes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      home: homeLocation,          // { latitude, longitude }
+      destination: destination     // { latitude, longitude }
+    }),
+  });
+  const matches = await response.json();
+
+  // Display matches as anonymous icons on map
+  setMatchedUsers(matches);
+}
+
+function onMatchIconClick(user) {
+  // Open WebSocket chat window with selected user
+  openChatWithUser(user.username);
+}
+
+
+
+d) Frontend: WebSocket Chat Connection (React Native)
+function openChatWithUser(username) {
+  const ws = new WebSocket(`wss://api.example.com/chat?user=${username}`);
+
+  ws.onopen = () => {
+    console.log('WebSocket connected');
+  };
+
+  ws.onmessage = (event) => {
+    // Append message to chat window
+    displayIncomingMessage(event.data);
+  };
+
+  function sendMessage(message) {
+    ws.send(JSON.stringify({ message }));
+  }
+}
+
+
+
+
