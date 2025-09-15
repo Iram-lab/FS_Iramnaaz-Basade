@@ -191,6 +191,7 @@ function openChatWithUser(username) {
 
 
 iv] what is innovative in my app:
+___________________________________
 
 | Feature                   | Your App: Student Commute Optimizer**                                                                              | Existing Apps (UberPool, BlaBlaCar, Waze Carpool)**                                     
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------
