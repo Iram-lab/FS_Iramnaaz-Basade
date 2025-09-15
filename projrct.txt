@@ -33,7 +33,7 @@ ___________________________________
 
 1. User Interface & Frontend
 
----Use React Native for cross-platform mobile app development.
+---Using React Native for cross-platform mobile app development.
 Why? One codebase for iOS and Android reduces development and maintenance cost.
 React Native integrates well with mapping libraries (Google Maps, Mapbox).
 
@@ -45,7 +45,7 @@ Minimal UI with simple input forms (home, destination) + map view + chat window.
 
 2. Backend Architecture
 
----Use Spring Boot for backend REST APIs and WebSocket support.
+---Using Spring Boot for backend REST APIs and WebSocket support.
 Why? Robust, scalable, widely supported, and allows multi-threaded handling of requests efficiently.
 Can be hosted on cost-effective cloud services (AWS EC2 t3.small, Google Cloud f1-micro, or Heroku free tier).
 Implement REST APIs for route submission and fetching matched routes.
